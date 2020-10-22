@@ -6,13 +6,11 @@ int main() {
 
     try {
 
-        Server* serv{new TCPServer(18000)};
+        std::unique_ptr<Server> serv{new TCPServer(18000)};
 
-        sck = dynamic_cast<TCPServer*>(serv)->accept();
+        dynamic_cast<TCPServer*>(serv.get())->accept();
 
-        serv->handle_request(sck);
-        
-        delete serv;
+        serv->handle_request();
 
     } catch(const std::system_error& e) {
         

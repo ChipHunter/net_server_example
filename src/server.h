@@ -12,21 +12,21 @@
 
 class serverImp {
 public:
-    serverImp(int port);
-    ~serverImp();
-
     /* TCP Implementation */
-    void sendTcp(int sck, const char* buf);
-    void recvTcp(int sck, char* buf, int len);
-    int  acceptConnection();
+    void setupTcp(int port);
+    void closeTcp();
+    void sendTcp(const char* buf);
+    void recvTcp(char* buf, int len);
+    void acceptConnection();
 
     /* UDP Implementation */
    // void sendUdp(int sck, const char* buf);
    // void recvUdp(int sck, char* buf, int len);
 
 private:
-    int _port = -1;
-    int _serverSck = -1;
+    int _port;
+    int _serverSck;
+    int _clientSck = -1;
 };
 
 class Server {
@@ -34,9 +34,9 @@ public:
     virtual ~Server() {};
 
 public:
-    virtual void send(int sck, const char* buf)       = 0;
-    virtual void recv(int sck, char* buf, int len)    = 0; 
-    virtual void handle_request(int sck)              = 0;
+    virtual void send(const char* buf)       = 0;
+    virtual void recv(char* buf, int len)    = 0; 
+    virtual void handle_request()            = 0;
 }; 
 
 class TCPServer : public Server {
@@ -51,10 +51,10 @@ public:
     TCPServer& operator=(TCPServer&&) = delete;
 
 public:
-    int  accept();
-    void send(int sck, const char* buf)    override final;
-    void recv(int sck, char* buf, int len) override final; 
-    void handle_request(int sck)           override final;
+    void send(const char* buf)    override final;
+    void recv(char* buf, int len) override final; 
+    void handle_request()         override final;
+    void accept();
 
 private:
     serverImp _imp;

@@ -1,6 +1,8 @@
 #include "server.h"
 
-serverImp::serverImp(int port) : _port{port} {
+void serverImp::setupTcp(int port) {
+
+    _port = port;
 
     sockaddr_in serverAddr;
     
@@ -20,18 +22,23 @@ serverImp::serverImp(int port) : _port{port} {
 
 }
 
-serverImp::~serverImp() {
+void serverImp::closeTcp() {
     
     if(close(_serverSck) == -1) {
-        std::cout << "cant close the socket" << std::endl;
+        std::cout << "cant close the socket " << strerror(errno) << std::endl;
     }
 
+    if (_clientSck != -1) { 
+        if(close(_clientSck) == -1) {
+            std::cout << "cant close the socket " << strerror(errno) << std::endl;
+        }
+    }
 }
 
-void serverImp::sendTcp(int sck, const char* buf) {
+void serverImp::sendTcp(const char* buf) {
 
     int numOfBytes;
-    numOfBytes = write(sck, buf, strlen(buf));
+    numOfBytes = write(_clientSck, buf, strlen(buf));
 
     if(numOfBytes == -1)
         throw std::system_error(errno, std::generic_category());
@@ -40,62 +47,69 @@ void serverImp::sendTcp(int sck, const char* buf) {
 
 }
 
-void serverImp::recvTcp(int sck, char* buf, int len) {
+void serverImp::recvTcp(char* buf, int len) {
 
     int numOfBytes;
-    numOfBytes = read(sck, buf, len - 1);
+    numOfBytes = read(_clientSck, buf, len - 1);
 
     if(numOfBytes == -1)
         throw std::system_error(errno, std::generic_category());
 
 }
 
-int serverImp::acceptConnection() {
+void serverImp::acceptConnection() {
 
-    int cliSck = accept(_serverSck, NULL, NULL);
-    if (cliSck == -1)
+    if (_clientSck != -1) close(_clientSck);
+
+    _clientSck = accept(_serverSck, NULL, NULL);
+    if (_clientSck == -1)
         throw std::system_error(errno, std::generic_category());
-
-    return cliSck;
 
 }
 
 /**************************************************************************/
 
-TCPServer::TCPServer(int port) : _imp(port) {}
+TCPServer::TCPServer(int port) {
 
-TCPServer::~TCPServer() {}
-
-void TCPServer::send(int sck, const char* buf) {
-
-    _imp.sendTcp(sck, buf);
+    _imp.setupTcp(port);
 
 }
 
-void TCPServer::recv(int sck, char* buf, int len) {
+TCPServer::~TCPServer() {
 
-    _imp.recvTcp(sck, buf, len);
-
-}
-
-int TCPServer::accept() {
-
-   return _imp.acceptConnection();
+    _imp.closeTcp();
 
 }
 
-void TCPServer::handle_request(int sck) {
+void TCPServer::send(const char* buf) {
+
+    _imp.sendTcp(buf);
+
+}
+
+void TCPServer::recv(char* buf, int len) {
+
+    _imp.recvTcp(buf, len);
+
+}
+
+void TCPServer::accept() {
+    
+    _imp.acceptConnection();
+
+}
+
+
+void TCPServer::handle_request() {
 
     int len = 64;
     char buf[len] = {0};
 
-    recv(sck, buf, len);
+    recv(buf, len);
 
     std::cout << "the msg is: " << buf << std::endl;
 
-    send(sck, buf);
-
-    close(sck);
+    send(buf);
 
 }
 
