@@ -33,6 +33,7 @@ void serverImp::closeTcp() {
             std::cout << "cant close the socket " << strerror(errno) << std::endl;
         }
     }
+
 }
 
 void serverImp::sendTcp(const char* buf) {
@@ -69,7 +70,7 @@ void serverImp::acceptConnection() {
 
 /**************************************************************************/
 
-TCPServer::TCPServer(int port) {
+TCPServer::TCPServer(int port, std::function<void(char*, int)> func) : _func{func} {
 
     _imp.setupTcp(port);
 
@@ -99,15 +100,16 @@ void TCPServer::accept() {
 
 }
 
-
-void TCPServer::handle_request() {
+void TCPServer::run() {
 
     int len = 64;
     char buf[len] = {0};
 
+    accept();
+
     recv(buf, len);
 
-    std::cout << "the msg is: " << buf << std::endl;
+    _func(buf, len);
 
     send(buf);
 

@@ -1,16 +1,15 @@
 #include "server.h"
 
-int main() {
 
-    int sck;
+int main() {
 
     try {
 
-        std::unique_ptr<Server> serv{new TCPServer(18000)};
+        auto echo = [] (char* buf, int len) {}; 
 
-        dynamic_cast<TCPServer*>(serv.get())->accept();
+        std::unique_ptr<Server> serv = std::make_unique<TCPServer>(18000, echo);
 
-        serv->handle_request();
+        serv->run();
 
     } catch(const std::system_error& e) {
         

@@ -9,6 +9,7 @@
 #include <vector>
 #include <queue>
 #include <memory>
+#include <functional>
 
 class serverImp {
 public:
@@ -36,12 +37,12 @@ public:
 public:
     virtual void send(const char* buf)       = 0;
     virtual void recv(char* buf, int len)    = 0; 
-    virtual void handle_request()            = 0;
+    virtual void run()                       = 0;
 }; 
 
 class TCPServer : public Server {
 public:
-    TCPServer(int port);
+    TCPServer(int port, std::function<void(char* buf, int len)> func);
     ~TCPServer();
     
     TCPServer(const TCPServer&)            = delete;
@@ -53,11 +54,14 @@ public:
 public:
     void send(const char* buf)    override final;
     void recv(char* buf, int len) override final; 
-    void handle_request()         override final;
+    void run()                    override final;
+
+private:
     void accept();
 
 private:
     serverImp _imp;
+    std::function<void(char* buf, int len)> _func;
 };
 
 /*class UDPServer : public Server {
