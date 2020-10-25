@@ -161,13 +161,17 @@ void TCPServer::run() {
     int len = 64;
     char buf[len] = {0};
 
-    accept();
+    while(true) {
 
-    recv(buf, len);
+        accept();
 
-    _func(buf, len);
+        recv(buf, len);
 
-    send(buf);
+        _func(buf, len);
+
+        send(buf);
+
+    }
 
 }
 
@@ -202,10 +206,14 @@ void UDPServer::run() {
     int len = 64;
     char buf[len] = {0};
 
-    recv(buf, len);
+    while(true) {
+    
+        recv(buf, len);
 
-    _func(buf, len);
+        _func(buf, len);
 
-    send(buf);
+        send(buf);
+    
+    }
 
 }

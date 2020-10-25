@@ -5,10 +5,7 @@ int main() {
 
     try {
 
-        auto echo = [] (char* buf, int len) {
-
-            snprintf(buf, len, "Thank You!");
-        }; 
+        auto echo = [] (char* buf, int len) {}; 
 
         std::unique_ptr<Server> serv = std::make_unique<UDPServer>(18000, echo);
 
