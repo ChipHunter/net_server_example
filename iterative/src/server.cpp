@@ -1,8 +1,9 @@
 #include "server.h"
 
-void serverImp::setupTcp(int port) {
+void serverImp::setupTcp(int port, std::function<void(char*, int)> func) {
 
     _port = port;
+    _func = func;
 
     sockaddr_in serverAddr;
     
@@ -72,10 +73,29 @@ void serverImp::acceptConnection() {
 
 }
 
+void serverImp::runTcp() {
 
-void serverImp::setupUdp(int port) {
+    int len = 64;
+    char buf[len] = {0};
+
+    while(true) {
+
+        acceptConnection();
+
+        recvTcp(buf, len);
+
+        _func(buf, len);
+
+        sendTcp(buf);
+
+    }
+
+}
+
+void serverImp::setupUdp(int port, std::function<void(char*, int)> func) {
 
     _port = port;
+    _func = func;
 
     sockaddr_in serverAddr;
 
@@ -124,11 +144,28 @@ void serverImp::recvUdp(char* buf, int len) {
 
 }
 
+void serverImp::runUdp() {
+
+    int len = 64;
+    char buf[len] = {0};
+
+    while(true) {
+    
+        recvUdp(buf, len);
+
+        _func(buf, len);
+
+        sendUdp(buf);
+    
+    }
+
+}
+
 /**************************************************************************/
 
-TCPServer::TCPServer(int port, std::function<void(char*, int)> func) : _func{func} {
+TCPServer::TCPServer(int port, std::function<void(char*, int)> func) {
 
-    _imp.setupTcp(port);
+    _imp.setupTcp(port, func);
 
 }
 
@@ -138,48 +175,17 @@ TCPServer::~TCPServer() {
 
 }
 
-void TCPServer::send(const char* buf) {
-
-    _imp.sendTcp(buf);
-
-}
-
-void TCPServer::recv(char* buf, int len) {
-
-    _imp.recvTcp(buf, len);
-
-}
-
-void TCPServer::accept() {
-    
-    _imp.acceptConnection();
-
-}
-
 void TCPServer::run() {
 
-    int len = 64;
-    char buf[len] = {0};
-
-    while(true) {
-
-        accept();
-
-        recv(buf, len);
-
-        _func(buf, len);
-
-        send(buf);
-
-    }
+    _imp.runTcp();
 
 }
 
 /**************************************************************************/
 
-UDPServer::UDPServer(int port, std::function<void(char*, int)> func) : _func{func} {
+UDPServer::UDPServer(int port, std::function<void(char*, int)> func) {
     
-    _imp.setupUdp(port);
+    _imp.setupUdp(port, func);
 
 }
 
@@ -189,31 +195,8 @@ UDPServer::~UDPServer() {
 
 }
 
-void UDPServer::send(const char* buf) {
-
-    _imp.sendUdp(buf);
-
-}
-
-void UDPServer::recv(char* buf, int len) {
-
-    _imp.recvUdp(buf, len);
-
-}
-
 void UDPServer::run() {
 
-    int len = 64;
-    char buf[len] = {0};
-
-    while(true) {
-    
-        recv(buf, len);
-
-        _func(buf, len);
-
-        send(buf);
-    
-    }
+    _imp.runUdp();
 
 }

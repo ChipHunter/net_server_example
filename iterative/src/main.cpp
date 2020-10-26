@@ -1,13 +1,12 @@
 #include "server.h"
 
-
 int main() {
 
     try {
 
         auto echo = [] (char* buf, int len) {}; 
 
-        std::unique_ptr<Server> serv = std::make_unique<UDPServer>(18000, echo);
+        std::unique_ptr<Server> serv = std::make_unique<TCPServer>(18000, echo);
 
         serv->run();
 
