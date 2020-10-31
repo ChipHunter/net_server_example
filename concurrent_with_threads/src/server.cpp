@@ -1,5 +1,7 @@
 #include "server.h"
 
+using Byte = std::vector<std::byte>;
+
 void jobsQueue::enqueue(int sck) {
 
     std::unique_lock<std::mutex> lock(_mtx);
@@ -83,7 +85,7 @@ void serverMain::runTcp() {
 }
 
 serverWorkers::serverWorkers(int numOfThreads, std::shared_ptr<jobsQueue> queue, 
-                            std::function<void(char*, int)> func) : _jobQueue{queue}, _func{func} {
+                            std::function<void(Byte&, int)> func) : _jobQueue{queue}, _func{func} {
 
     try {
 
@@ -119,9 +121,8 @@ serverWorkers::~serverWorkers() {
 void serverWorkers::sendTcp(int sck, const char* buf) {
 
     int numOfBytes;
-
+    
     numOfBytes = write(sck, buf, strlen(buf));
-
     if(numOfBytes == -1)
         std::cout << "Error in write: " << strerror(errno) << std::endl;
     else if (numOfBytes != static_cast<int>(strlen(buf)))
@@ -132,8 +133,8 @@ void serverWorkers::sendTcp(int sck, const char* buf) {
 void serverWorkers::recvTcp(int sck, char* buf, int len) {
 
     int numOfBytes;
-    numOfBytes = read(sck, buf, len - 1);
 
+    numOfBytes = read(sck, buf, len - 1);
     if(numOfBytes == -1)
         std::cout << "Error in read: " << strerror(errno) << std::endl;
 
@@ -160,13 +161,14 @@ void serverWorkers::funcToRunTcp() {
             continue;
 
         int len = 64;
-        char buf[len] = {0};
+        Byte buf;
+        buf.reserve(len);
 
-        recvTcp(sck, buf, len);
+        recvTcp(sck, reinterpret_cast<char*>(&buf[0]), len);
 
         _func(buf, len);
 
-        sendTcp(sck, buf);
+        sendTcp(sck, reinterpret_cast<char*>(&buf[0]));
 
         close(sck);
 
@@ -174,8 +176,7 @@ void serverWorkers::funcToRunTcp() {
 
 }
 
-
-serverImp::serverImp(std::function<void(char*, int)> func) : _jobs{std::make_shared<jobsQueue>()}, 
+serverImp::serverImp(std::function<void(Byte&, int)> func) : _jobs{std::make_shared<jobsQueue>()}, 
                            _main{std::make_unique<serverMain>(_jobs)}, 
                            _workers{std::make_unique<serverWorkers>(10, _jobs, func)} {}
 
@@ -295,7 +296,6 @@ void serverImp::runUdp() {
 
     }
 
-
 }
 
 void serverImp::createThreadsUdp() {
@@ -315,7 +315,7 @@ void serverImp::createThreadsUdp() {
 
 /**************************************************************************/
 
-TCPServer::TCPServer(int port, std::function<void(char*, int)> func) : _imp(func) {
+TCPServer::TCPServer(int port, std::function<void(Byte&, int)> func) : _imp(func) {
 
     _imp.setupTcp(port);
 

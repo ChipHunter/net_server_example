@@ -4,7 +4,7 @@ int main() {
 
     try {
 
-        auto echo = [] (char* buf, int len) {}; 
+        auto echo = [] (std::vector<std::byte>& buf, int len) {}; 
 
         std::unique_ptr<Server> serv = std::make_unique<TCPServer>(18000, echo);
 

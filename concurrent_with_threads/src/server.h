@@ -10,6 +10,7 @@
 #include <vector>
 #include <queue>
 #include <mutex>
+#include <cstddef>
 
 class jobsQueue {
 public:
@@ -23,7 +24,7 @@ private:
 
 class serverWorkers {
 public:
-    serverWorkers(int numOfThreads, std::shared_ptr<jobsQueue> queue, std::function<void(char*, int)> func);
+    serverWorkers(int numOfThreads, std::shared_ptr<jobsQueue> queue, std::function<void(std::vector<std::byte>&, int)> func);
     ~serverWorkers();
 
 private:
@@ -34,7 +35,7 @@ private:
 
 private:
     std::shared_ptr<jobsQueue> _jobQueue;
-    std::function<void(char*, int)> _func;
+    std::function<void(std::vector<std::byte>&, int)> _func;
     std::vector<std::thread*> _threadVect;
 };
 
@@ -64,7 +65,7 @@ private:
 
 class serverImp {
 public:
-    serverImp(std::function<void(char*, int)> func);
+    serverImp(std::function<void(std::vector<std::byte>&, int)> func);
     void setupTcp(int port);
     void closeTcp();
     void runTcp();
@@ -85,7 +86,7 @@ public:
 
 class TCPServer : public Server {
 public:
-    TCPServer(int port, std::function<void(char* buf, int len)> func);
+    TCPServer(int port, std::function<void(std::vector<std::byte>& buf, int len)> func);
     ~TCPServer();
     
     TCPServer(const TCPServer&)            = delete;
