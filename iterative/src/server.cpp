@@ -15,12 +15,22 @@ void serverImp::setupTcp(int port, std::function<void(char*, int)> func) {
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if(bind(_serverSck, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
-        throw std::system_error(errno, std::generic_category());
+    try {
 
-    if(listen(_serverSck, 10) == -1)
-        throw std::system_error(errno, std::generic_category());
+        if(bind(_serverSck, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
+            throw std::system_error(errno, std::generic_category());
 
+        if(listen(_serverSck, 10) == -1)
+            throw std::system_error(errno, std::generic_category());
+
+    } catch (std::system_error& e) {
+
+        if (close(_serverSck) == -1) 
+            std::cout << "Can't close the socket!" << std::endl;
+
+        throw e;
+        
+    }
 }
 
 void serverImp::closeTcp() {
@@ -107,9 +117,17 @@ void serverImp::setupUdp(int port, std::function<void(char*, int)> func) {
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if(bind(_serverSck, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
-        throw std::system_error(errno, std::generic_category());
+    try {
+        if(bind(_serverSck, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
+            throw std::system_error(errno, std::generic_category());
+    } catch (std::system_error& e) {
 
+        if(close(_serverSck) == -1) {
+            std::cout << "Can't close the socket!" << std::endl;
+        }
+
+        throw e;
+    }
 }
 
 void serverImp::closeUdp() {
